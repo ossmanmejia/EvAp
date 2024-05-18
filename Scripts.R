@@ -1,0 +1,253 @@
+# Este script instala y carga las bibliotecas necesarias para trabajar con datos en R.
+# Primero, instalamos las bibliotecas necesarias utilizando la función install.packages().
+install.packages("readxl")  # Esta línea instala el paquete readxl, que nos permite leer archivos de Excel en R.
+install.packages("dplyr")   # Esta línea instala el paquete dplyr, que proporciona herramientas para manipulación de datos.
+install.packages("ggplot2") # Esta línea instala el paquete ggplot2, que nos permite crear visualizaciones gráficas de datos.
+install.packages("summarytools")  # Esta línea instala el paquete summarytools, que proporciona funciones para resumir datos.
+
+# Después de instalar las bibliotecas, las cargamos en el entorno de trabajo utilizando la función library().
+library(ggplot2)    # Esta línea carga el paquete ggplot2, que utilizaremos para crear gráficos.
+library(summarytools)   # Esta línea carga el paquete summarytools, que utilizaremos para resumir los datos.
+library(readxl)     # Esta línea carga el paquete readxl, que utilizaremos para leer archivos de Excel.
+library(dplyr)      # Esta línea carga el paquete dplyr, que utilizaremos para manipular datos.
+
+# Establecemos el directorio de trabajo para el archivo Excel que vamos a leer utilizando la función setwd().
+setwd("C:/Users/ossma/Desktop/EvAp")
+# Leemos el archivo Excel y lo almacenamos en un objeto llamado datos utilizando la función read_excel() del paquete readxl.
+datos <- read_excel("Diagnostico.C.Exactas.xlsx")
+
+# En este fragmento de código, se están renombrando algunas columnas en el conjunto de datos 'datos' utilizando la función rename() del paquete dplyr.
+# Se utiliza el operador pipe (%>%) para encadenar múltiples operaciones.
+# Se renombra la columna '¿Actualmente te encuentras trabajando?' como 'situacion_laboral'.
+datos <- datos %>% 
+  rename(situacion_laboral = `¿Actualmente te encuentras trabajando?`)
+# Se renombra la columna 'Semestre actual' como 'semestre'.
+datos <- datos %>% 
+  rename(semestre = `Semestre actual`)
+# Se renombra la columna '¿Cuántas materias matriculaste este semestre?' como 'asignaturas_matriculadas'.
+datos <- datos %>% 
+  rename(asignaturas_matriculadas = `¿Cuántas materias matriculaste este semestre?`)
+# Se renombra la columna 'Estado Civil' como 'estado_civil'.
+datos <- datos %>% 
+  rename(estado_civil = `Estado Civil`)
+# Se renombra la columna '¿Que medio de transporte utilizas para desplazarte a la UCO diariamente?' como 'medio_transporte'.
+datos <- datos %>% 
+  rename(medio_transporte = `¿Que medio de transporte utilizas para desplazarte a la UCO diariamente?`)
+
+
+# En este fragmento de código se están realizando varias operaciones de exploración y visualización de los datos.
+# Mostramos los nombres de las columnas del conjunto de datos 'datos' utilizando la función colnames().
+colnames(datos)
+
+# Se define una función llamada 'agrupar_situacion_laboral' que categoriza las respuestas de la situación laboral.
+agrupar_situacion_laboral <- function(respuesta) {
+  if (is.na(respuesta)) {
+    return("Valor Faltante")
+  }
+  
+  respuesta <- tolower(respuesta)
+  
+  if (grepl("tiempocompleto", respuesta) | grepl("tiempo completo -", respuesta)) {
+    return("Tiempo Completo")
+  } else if (grepl("medio tiempo", respuesta)) {
+    return("Medio Tiempo")
+  } else if (grepl("independiente", respuesta)) {
+    return("Independiente")
+  } else if (grepl("cuarto de tiempo", respuesta)) {
+    return("Cuarto de Tiempo")
+  } else if (grepl("por dias", respuesta) | grepl("un dia a la semana", respuesta)) {
+    return("Por Días")
+  } else if (grepl("fines de semana", respuesta) | grepl("sabados", respuesta) | grepl("sabatinos", respuesta) | 
+             grepl("sabado y domingo", respuesta) | grepl("sabados, domingos y festivos", respuesta) | 
+             grepl("fin de semana", respuesta)) {
+    return("Fines de Semana")
+  } else if (respuesta == "no") {
+    return("No Trabaja")
+  } else {
+    return("Otro")
+  }
+}
+
+# Aplicamos la función 'agrupar_situacion_laboral' a la columna 'situacion_laboral' utilizando sapply().
+datos$situacion_laboral_agrupada <- sapply(datos$situacion_laboral, agrupar_situacion_laboral)
+
+
+# Se define una función llamada 'agrupar_medio_transporte' que categoriza las respuestas del medio de transporte.
+
+agrupar_medio_transporte <- function(respuesta) {
+  if (is.na(respuesta)) {
+    return("Valor Faltante")
+  }
+  
+  respuesta <- tolower(respuesta)
+  
+  if (grepl("bicicleta", respuesta)) {
+    return("Bicicleta")
+  } else if (grepl("bus|transporte.publico", respuesta)) {
+    return("Transporte Público")
+  } else if (grepl("caminando", respuesta)) {
+    return("Caminando")
+  } else if (grepl("carro|auto|moto", respuesta)) {
+    return("Vehículo Propio")
+  } else {
+    return("Otro")
+  }
+}
+
+# Aplicamos la función 'agrupar_medio_transporte' a la columna 'medio_transporte' utilizando sapply().
+datos$medio_transporte_agrupado <- sapply(datos$medio_transporte, agrupar_medio_transporte)
+
+
+
+#Instalación del paquete knitr  para la creación de tablas
+install.packages("knitr")
+# Carga del paquete knitr
+library(knitr)
+# Tabla de frecuencia para la situación laboral
+tabla_situacion_laboral <- table(datos$situacion_laboral_agrupada)
+print("Tabla de Frecuencia para Situación Laboral:")
+kable(tabla_situacion_laboral, caption = "Tabla de Frecuencia para Situación Laboral")
+# Tabla de frecuencia para el semestre
+tabla_semestre <- table(datos$semestre)
+print("Tabla de Frecuencia para Semestre:")
+kable(tabla_semestre, caption = "Tabla de Frecuencia para Semestre")
+# Tabla de frecuencia para el número de asignaturas matriculadas
+tabla_asignaturas <- table(datos$asignaturas_matriculadas)
+print("Tabla de Frecuencia para Asignaturas Matriculadas:")
+kable(tabla_asignaturas, caption = "Tabla de Frecuencia para Asignaturas Matriculadas")
+# Tabla de frecuencia para el estado civil
+tabla_estado_civil <- table(datos$estado_civil)
+print("Tabla de Frecuencia para Estado Civil:")
+kable(tabla_estado_civil, caption = "Tabla de Frecuencia para Estado Civil")
+# Tabla de frecuencia para el medio de transporte
+tabla_medio_transporte <- table(datos$medio_transporte_agrupado)
+print("Tabla de Frecuencia para Medio de Transporte:")
+kable(tabla_medio_transporte, caption = "Tabla de Frecuencia para Medio de Transporte")
+
+# Gráfico de barras para la situación laboral
+ggplot(data = datos, aes(x = situacion_laboral_agrupada)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribución de Situación Laboral",
+       x = "Situación Laboral",
+       y = "Frecuencia") +
+  theme_minimal()
+# Gráfico de barras para el semestre
+ggplot(data = datos, aes(x = as.factor(semestre))) +
+  geom_bar(fill = "lightgreen") +
+  labs(title = "Distribución de Semestre",
+       x = "Semestre",
+       y = "Frecuencia") +
+  theme_minimal()
+# Gráfico de barras para el número de asignaturas matriculadas
+ggplot(data = datos, aes(x = asignaturas_matriculadas)) +
+  geom_bar(fill = "salmon") +
+  labs(title = "Distribución de Asignaturas Matriculadas",
+       x = "Número de Asignaturas Matriculadas",
+       y = "Frecuencia") +
+  theme_minimal()
+# Gráfico de barras para el estado civil
+ggplot(data = datos, aes(x = estado_civil)) +
+  geom_bar(fill = "purple") +
+  labs(title = "Distribución de Estado Civil",
+       x = "Estado Civil",
+       y = "Frecuencia") +
+  theme_minimal()
+# Gráfico de barras para el medio de transporte
+ggplot(data = datos, aes(x = medio_transporte_agrupado)) +
+  geom_bar(fill = "orange") +
+  labs(title = "Distribución de Medio de Transporte",
+       x = "Medio de Transporte",
+       y = "Frecuencia") +
+  theme_minimal()
+
+
+# Media asignaturas
+media_asignaturas <- mean(datos$asignaturas_matriculadas, na.rm = TRUE)
+# Mediana asignaturas
+mediana_asignaturas <- median(datos$asignaturas_matriculadas, na.rm = TRUE)
+# Moda para situación laboral
+moda_situacion_laboral <- names(sort(table(datos$situacion_laboral_agrupada), decreasing = TRUE)[1])
+# Moda para semestre
+moda_semestre <- names(sort(table(datos$semestre), decreasing = TRUE)[1])
+# Creamos una tabla para las medidas de tendencia central de la variable "Asignaturas Matriculadas"
+tabla_asignaturas_matriculadas <- data.frame(
+  Medida = c("Media", "Mediana"),
+  Valor = c(media_asignaturas, mediana_asignaturas)
+)
+# Mostramos la tabla
+tabla_asignaturas_matriculadas
+# Creamos una tabla para la medida de tendencia central (Moda) de la variable "Situación Laboral"
+tabla_situacion_laboral <- data.frame(
+  Medida = "Moda",
+  Valor = moda_situacion_laboral
+)
+# Mostramos la tabla
+tabla_situacion_laboral
+# Creamos una tabla para la medida de tendencia central (Moda) de la variable "Semestre"
+tabla_semestre <- data.frame(
+  Medida = "Moda",
+  Valor = moda_semestre
+)
+# Mostramos la tabla
+tabla_semestre
+
+# Calculamos medidas de dispersión para la variable "Asignaturas Matriculadas"
+desviacion_estandar_asignaturas <- sd(datos$asignaturas_matriculadas, na.rm = TRUE)
+rango_asignaturas <- max(datos$asignaturas_matriculadas, na.rm = TRUE) - min(datos$asignaturas_matriculadas, na.rm = TRUE)
+Q1 <- quantile(datos$asignaturas_matriculadas, 0.25, na.rm = TRUE)
+Q3 <- quantile(datos$asignaturas_matriculadas, 0.75, na.rm = TRUE)
+IQR_asignaturas <- Q3 - Q1
+
+# Creamos la tabla
+tabla_dispersión <- data.frame(
+  Variable = "Asignaturas Matriculadas",
+  Desviación_Estándar = desviacion_estandar_asignaturas,
+  Rango = rango_asignaturas,
+  IQR = IQR_asignaturas
+)
+
+# Mostramos la tabla
+tabla_dispersión
+
+# Crear tabla de contingencia entre "Situación Laboral" y "Semestre"
+tabla_contingencia_situacion_semestre <- table(datos$situacion_laboral_agrupada, datos$semestre)
+
+# Mostrar la tabla de contingencia
+print(tabla_contingencia_situacion_semestre)
+
+# Crear tabla de contingencia entre "Situación Laboral" y "Estado Civil"
+tabla_contingencia_situacion_estado_civil <- table(datos$situacion_laboral_agrupada, datos$estado_civil)
+
+# Mostrar la tabla de contingencia
+print(tabla_contingencia_situacion_estado_civil)
+
+# Crear tabla de contingencia entre "Medio de Transporte" y "Semestre"
+tabla_contingencia_transporte_semestre <- table(datos$medio_transporte_agrupado, datos$semestre)
+
+# Mostrar la tabla de contingencia
+print(tabla_contingencia_transporte_semestre)
+
+# Crear tabla de contingencia entre "Medio de Transporte" y "Estado Civil"
+tabla_contingencia_transporte_estado_civil <- table(datos$medio_transporte_agrupado, datos$estado_civil)
+
+# Mostrar la tabla de contingencia
+print(tabla_contingencia_transporte_estado_civil)
+
+
+# Convertir variables categóricas a factores numéricos
+datos <- datos %>%
+  mutate(
+    situacion_laboral_num = as.numeric(factor(situacion_laboral_agrupada)),
+    estado_civil_num = as.numeric(factor(estado_civil)),
+    medio_transporte_num = as.numeric(factor(medio_transporte_agrupado))
+  )
+
+# Seleccionar solo las variables numéricas para calcular la correlación
+datos_numericos <- datos %>%
+  select(situacion_laboral_num, estado_civil_num, medio_transporte_num, semestre, asignaturas_matriculadas)
+
+# Calcular la matriz de correlación
+matriz_correlacion <- cor(datos_numericos, use = "complete.obs")
+
+# Mostrar la matriz de correlación
+print(matriz_correlacion)
